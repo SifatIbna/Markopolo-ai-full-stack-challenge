@@ -21,6 +21,7 @@ export interface Message {
   isUser: boolean;
   isStreaming?: boolean;
   recommendation?: CampaignRecommendation;
+  isRealAI?: boolean;
 }
 
 export interface CampaignRecommendation {

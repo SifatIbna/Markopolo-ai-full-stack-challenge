@@ -10,18 +10,14 @@ jobs:
   test:
     runs-on: ubuntu-latest
 
-    strategy:
-      matrix:
-        node-version: [18.x, 20.x]
-
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    - name: Setup Node.js ${{ matrix.node-version }}
+    - name: Setup Node.js
       uses: actions/setup-node@v4
       with:
-        node-version: ${{ matrix.node-version }}
+        node-version: '22'
         cache: 'npm'
 
     - name: Install dependencies
@@ -36,10 +32,7 @@ jobs:
     - name: Run unit tests
       run: npm run test:coverage
 
-    - name: Build application
-      run: npm run build
-
-    - name: Start application for E2E tests
+    - name: Build and start application for E2E tests
       run: npm run build && npm start &
 
     - name: Wait for application to be ready

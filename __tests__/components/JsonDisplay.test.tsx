@@ -1,4 +1,4 @@
-import { render, screen, fireEvent, cleanup, act, waitFor } from '@testing-library/react'
+import { render, screen, fireEvent, cleanup, act } from '@testing-library/react'
 import { JsonDisplay } from '@/components/ui/JsonDisplay'
 
 // Mock clipboard API

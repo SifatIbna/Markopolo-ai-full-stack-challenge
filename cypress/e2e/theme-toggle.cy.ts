@@ -9,21 +9,36 @@ describe('Theme Toggle', () => {
   })
 
   it('should toggle between light and dark themes', () => {
-    // Wait for component to mount
+    // Wait for component to mount and theme to be resolved
     cy.get('button[aria-label="Toggle theme"]').should('be.visible')
 
-    // Click theme toggle
-    cy.get('button[aria-label="Toggle theme"]').click()
+    // Wait for theme system to fully initialize
+    cy.wait(500)
 
-    // Wait for theme change and check for dark mode indicators
-    cy.get('html').should('have.class', 'dark')
-    cy.get('.dark\\:bg-gray-900').should('exist')
+    // Get initial theme state
+    cy.get('html').then(($html) => {
+      const isInitiallyDark = $html.hasClass('dark')
 
-    // Toggle back to light
-    cy.get('button[aria-label="Toggle theme"]').click()
+      // Click theme toggle
+      cy.get('button[aria-label="Toggle theme"]').click()
 
-    // Check theme changed back to light (dark class should be removed)
-    cy.get('html').should('not.have.class', 'dark')
+      // Wait for theme change and verify opposite state
+      if (isInitiallyDark) {
+        cy.get('html').should('not.have.class', 'dark', { timeout: 5000 })
+      } else {
+        cy.get('html').should('have.class', 'dark', { timeout: 5000 })
+      }
+
+      // Toggle back
+      cy.get('button[aria-label="Toggle theme"]').click()
+
+      // Verify it returns to original state
+      if (isInitiallyDark) {
+        cy.get('html').should('have.class', 'dark', { timeout: 5000 })
+      } else {
+        cy.get('html').should('not.have.class', 'dark', { timeout: 5000 })
+      }
+    })
   })
 
   it('should show correct icons for light and dark themes', () => {

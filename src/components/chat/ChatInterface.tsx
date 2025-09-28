@@ -9,9 +9,10 @@ import { generateCampaignRecommendation } from '@/lib/campaignGenerator';
 interface ChatInterfaceProps {
   dataSources: DataSource[];
   channels: Channel[];
+  apiKey?: string;
 }
 
-export default function ChatInterface({ dataSources, channels }: ChatInterfaceProps) {
+export default function ChatInterface({ dataSources, channels, apiKey }: ChatInterfaceProps) {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
@@ -64,7 +65,8 @@ export default function ChatInterface({ dataSources, channels }: ChatInterfacePr
       return;
     }
 
-    setTimeout(async () => {
+    // Call the API
+    try {
       const streamingMessage: Message = {
         id: (Date.now() + 1).toString(),
         content: '',
@@ -96,27 +98,60 @@ export default function ChatInterface({ dataSources, channels }: ChatInterfacePr
         );
       }
 
-      await new Promise(resolve => setTimeout(resolve, 500));
+      // Call the Claude API
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          message: userMessage.content,
+          dataSources: dataSources,
+          channels: channels,
+          apiKey: apiKey || '',
+        }),
+      });
 
+      const data = await response.json();
+
+      // Stream the response
+      await simulateStreaming(streamingMessage.id, data.message, data.campaign, data.isRealAI);
+      setIsLoading(false);
+    } catch (error) {
+      console.error('Error calling API:', error);
+
+      // Fallback to local generation on error
       const recommendation = generateCampaignRecommendation(
-        inputValue,
+        userMessage.content,
         connectedSources,
         enabledChannels
       );
 
-      const response = `Based on your connected data sources (${connectedSources.map(ds => ds.name).join(', ')}) and enabled channels (${enabledChannels.map(ch => ch.name).join(', ')}), here's my recommendation:\n\n**Campaign Strategy:**\n\n${formatCampaignRecommendation(recommendation)}`;
+      const fallbackResponse = `⚠️ API Error - using local fallback\n\nBased on your connected data sources (${connectedSources.map(ds => ds.name).join(', ')}) and enabled channels (${enabledChannels.map(ch => ch.name).join(', ')}), here's my recommendation:\n\n**Campaign Strategy:**\n\n${formatCampaignRecommendation(recommendation)}`;
 
-      await simulateStreaming(streamingMessage.id, response, recommendation);
+      const streamingMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        content: '',
+        timestamp: new Date(),
+        isUser: false,
+        isStreaming: true,
+      };
+
+      setMessages(prev => [...prev, streamingMessage]);
+      await simulateStreaming(streamingMessage.id, fallbackResponse, recommendation);
       setIsLoading(false);
-    }, 1000);
+    }
   };
 
-  const simulateStreaming = async (messageId: string, fullText: string, recommendation?: CampaignRecommendation) => {
+  const simulateStreaming = async (messageId: string, fullText: string, recommendation?: CampaignRecommendation, isRealAI?: boolean) => {
     const words = fullText.split(' ');
     let currentText = '';
 
     for (let i = 0; i < words.length; i++) {
       currentText += (i > 0 ? ' ' : '') + words[i];
+
+      // Use the recommendation passed from the API (server already extracted JSON)
+      let extractedRecommendation = recommendation;
 
       setMessages(prev =>
         prev.map(msg =>
@@ -125,7 +160,8 @@ export default function ChatInterface({ dataSources, channels }: ChatInterfacePr
                 ...msg,
                 content: currentText,
                 isStreaming: i < words.length - 1,
-                recommendation: i === words.length - 1 ? recommendation : undefined
+                recommendation: i === words.length - 1 ? extractedRecommendation : undefined,
+                isRealAI: i === words.length - 1 ? isRealAI : undefined
               }
             : msg
         )
@@ -162,7 +198,7 @@ ${rec.campaign_config.budget ? `**Budget:** $${rec.campaign_config.budget.toLoca
     `.trim();
   };
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
+  const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSendMessage();
@@ -191,7 +227,7 @@ ${rec.campaign_config.budget ? `**Budget:** $${rec.campaign_config.budget.toLoca
           <textarea
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
-            onKeyPress={handleKeyPress}
+            onKeyDown={handleKeyDown}
             placeholder="Ask about campaign strategies, audience insights, or marketing recommendations..."
             className="flex-1 resize-none rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
             rows={2}

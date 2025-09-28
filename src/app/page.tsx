@@ -4,6 +4,7 @@ import { useState } from 'react';
 import ChatInterface from '@/components/chat/ChatInterface';
 import DataSourcePanel from '@/components/data-sources/DataSourcePanel';
 import ChannelPanel from '@/components/channels/ChannelPanel';
+import ApiKeySettings from '@/components/settings/ApiKeySettings';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import { DataSource, Channel } from '@/types';
 
@@ -20,6 +21,8 @@ export default function Home() {
     { id: '3', name: 'WhatsApp Business', type: 'whatsapp', enabled: false },
     { id: '4', name: 'Advertising Platforms', type: 'ads', enabled: false },
   ]);
+
+  const [apiKey, setApiKey] = useState<string>('');
 
   const toggleDataSource = (id: string) => {
     setDataSources(prev =>
@@ -54,6 +57,7 @@ export default function Home() {
 
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 flex-1 min-h-0 max-h-full overflow-hidden">
           <div className="lg:col-span-1 space-y-6 overflow-y-auto max-h-full">
+            <ApiKeySettings onApiKeyChange={setApiKey} />
             <DataSourcePanel
               dataSources={dataSources}
               onToggle={toggleDataSource}
@@ -68,6 +72,7 @@ export default function Home() {
             <ChatInterface
               dataSources={dataSources}
               channels={channels}
+              apiKey={apiKey}
             />
           </div>
         </div>
