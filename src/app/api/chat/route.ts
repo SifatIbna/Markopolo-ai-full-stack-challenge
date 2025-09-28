@@ -2,8 +2,12 @@ import Anthropic from '@anthropic-ai/sdk';
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function POST(request: NextRequest) {
+  let message, dataSources, channels;
+
   try {
-    const { message, dataSources, channels, apiKey } = await request.json();
+    const requestBody = await request.json();
+    ({ message, dataSources, channels } = requestBody);
+    const { apiKey } = requestBody;
 
     // If no API key is provided, return dummy response
     if (!apiKey) {
