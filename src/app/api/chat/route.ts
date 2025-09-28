@@ -14,7 +14,7 @@ export async function POST(request: NextRequest) {
       return getDummyResponse(message, dataSources, channels);
     }
 
-    // Initialize Claude with the provided API key
+    // Initialize AI service with the provided API key
     const anthropic = new Anthropic({
       apiKey: apiKey,
     });
@@ -118,7 +118,7 @@ Then provide the detailed JSON configuration in \`\`\`json code blocks following
         // Remove the JSON block from the message text to avoid duplicate display
         responseText = responseText.replace(/```json\s*([\s\S]*?)\s*```/, '').trim();
       } catch (e) {
-        console.error('Failed to parse JSON from Claude response:', e);
+        console.error('Failed to parse JSON from AI response:', e);
       }
     }
 
@@ -129,7 +129,7 @@ Then provide the detailed JSON configuration in \`\`\`json code blocks following
     });
 
   } catch (error) {
-    console.error('Claude API Error:', error);
+    console.error('AI API Error:', error);
 
     // Fallback to dummy response on error
     return getDummyResponse(message, dataSources, channels, 'API Error - using fallback response');
@@ -202,7 +202,7 @@ I've analyzed your available data sources and channels to create a targeted camp
 **🚀 Execution Ready:**
 The campaign includes personalized email templates, automation triggers, and detailed targeting parameters. You can launch this immediately with your connected ${connectedSources.map(ds => ds.name).join(' & ')} data.
 
-${errorNote ? '\n**Note:** This is a demonstration response. Connect your Claude API key for real AI-powered recommendations.' : '**Demo Mode:** This is a sample response. Add your Claude API key for personalized AI recommendations based on your actual data.'}`;
+${errorNote ? '\n**Note:** This is a demonstration response. Connect your API key for real AI-powered recommendations.' : '**Demo Mode:** This is a sample response. Add your API key for personalized AI recommendations based on your actual data.'}`;
 
   return NextResponse.json({
     message: responseMessage,

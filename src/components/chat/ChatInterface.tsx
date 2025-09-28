@@ -98,7 +98,7 @@ export default function ChatInterface({ dataSources, channels, apiKey }: ChatInt
         );
       }
 
-      // Call the Claude API
+      // Call the AI API
       const response = await fetch('/api/chat', {
         method: 'POST',
         headers: {

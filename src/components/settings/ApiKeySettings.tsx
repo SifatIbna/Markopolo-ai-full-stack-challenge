@@ -14,7 +14,7 @@ export default function ApiKeySettings({ onApiKeyChange }: ApiKeySettingsProps) 
 
   useEffect(() => {
     // Load API key from localStorage on component mount
-    const savedApiKey = localStorage.getItem('claude-api-key');
+    const savedApiKey = localStorage.getItem('ai-api-key');
     if (savedApiKey) {
       setApiKey(savedApiKey);
       onApiKeyChange(savedApiKey);
@@ -23,7 +23,7 @@ export default function ApiKeySettings({ onApiKeyChange }: ApiKeySettingsProps) 
   }, [onApiKeyChange]);
 
   const validateApiKey = (key: string) => {
-    // Basic validation - Claude API keys start with 'sk-ant-'
+    // Basic validation - API keys start with 'sk-ant-'
     const isValid = key.startsWith('sk-ant-') && key.length > 20;
     setIsValidKey(isValid);
     return isValid;
@@ -35,11 +35,11 @@ export default function ApiKeySettings({ onApiKeyChange }: ApiKeySettingsProps) 
 
     if (newKey) {
       validateApiKey(newKey);
-      localStorage.setItem('claude-api-key', newKey);
+      localStorage.setItem('ai-api-key', newKey);
       onApiKeyChange(newKey);
     } else {
       setIsValidKey(null);
-      localStorage.removeItem('claude-api-key');
+      localStorage.removeItem('ai-api-key');
       onApiKeyChange('');
     }
   };
@@ -47,7 +47,7 @@ export default function ApiKeySettings({ onApiKeyChange }: ApiKeySettingsProps) 
   const clearApiKey = () => {
     setApiKey('');
     setIsValidKey(null);
-    localStorage.removeItem('claude-api-key');
+    localStorage.removeItem('ai-api-key');
     onApiKeyChange('');
   };
 
@@ -56,14 +56,14 @@ export default function ApiKeySettings({ onApiKeyChange }: ApiKeySettingsProps) 
       <div className="flex items-center space-x-2 mb-4">
         <Key className="w-5 h-5 text-blue-600" />
         <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-          Claude API Configuration
+          AI API Configuration
         </h2>
       </div>
 
       <div className="space-y-4">
         <div>
           <label htmlFor="api-key" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-            Claude API Key
+            AI API Key
           </label>
           <div className="relative">
             <input
@@ -111,15 +111,15 @@ export default function ApiKeySettings({ onApiKeyChange }: ApiKeySettingsProps) 
         }`}>
           {apiKey
             ? isValidKey
-              ? '✅ Valid Claude API key detected. You\'ll receive real AI-powered campaign recommendations.'
-              : '❌ Invalid API key format. Claude API keys should start with "sk-ant-" and be longer than 20 characters.'
-            : '💡 Add your Claude API key to receive real AI-powered marketing campaign recommendations. Without an API key, you\'ll see demo responses.'
+              ? '✅ Valid API key detected. You\'ll receive real AI-powered campaign recommendations.'
+              : '❌ Invalid API key format. API keys should start with "sk-ant-" and be longer than 20 characters.'
+            : '💡 Add your API key to receive real AI-powered marketing campaign recommendations. Without an API key, you\'ll see demo responses.'
           }
         </div>
 
         <div className="text-xs text-gray-500 dark:text-gray-400">
           <p className="mb-2">
-            <strong>How to get your Claude API key:</strong>
+            <strong>How to get your API key:</strong>
           </p>
           <ol className="list-decimal list-inside space-y-1">
             <li>Visit <a href="https://console.anthropic.com" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">console.anthropic.com</a></li>
