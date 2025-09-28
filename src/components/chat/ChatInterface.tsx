@@ -34,12 +34,12 @@ export default function ChatInterface({ dataSources, channels, apiKey }: ChatInt
 
       if (savedMessages) {
         try {
-          const parsedMessages = JSON.parse(savedMessages).map((msg: any) => ({
+          const parsedMessages = JSON.parse(savedMessages).map((msg: Message) => ({
             ...msg,
             timestamp: new Date(msg.timestamp)
           }));
           setMessages(parsedMessages);
-          messageIdCounter.current = Math.max(...parsedMessages.map((m: any) => parseInt(m.id))) + 1;
+          messageIdCounter.current = Math.max(...parsedMessages.map((m: Message) => parseInt(m.id))) + 1;
         } catch (error) {
           console.error('Error loading chat history:', error);
           // Fall back to welcome message
