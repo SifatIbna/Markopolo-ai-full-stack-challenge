@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { Send, Loader2 } from 'lucide-react';
+import { Send, Loader2, History, Trash2 } from 'lucide-react';
 import { DataSource, Channel, Message, CampaignRecommendation } from '@/types';
 import MessageBubble from './MessageBubble';
 import { generateCampaignRecommendation } from '@/lib/campaignGenerator';
@@ -13,25 +13,94 @@ interface ChatInterfaceProps {
 }
 
 export default function ChatInterface({ dataSources, channels, apiKey }: ChatInterfaceProps) {
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: '1',
-      content: 'Hello! I\'m your AI marketing assistant. Connect your data sources and channels, then ask me about campaign recommendations, audience insights, or marketing strategies.',
-      timestamp: new Date(),
-      isUser: false,
-    },
-  ]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [questionHistory, setQuestionHistory] = useState<string[]>([]);
+  const [showHistory, setShowHistory] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messageIdCounter = useRef(1);
+  const historyRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
+  // Load chat history from localStorage and initialize welcome message
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const savedMessages = localStorage.getItem('chat-messages');
+      const savedQuestionHistory = localStorage.getItem('question-history');
+
+      if (savedMessages) {
+        try {
+          const parsedMessages = JSON.parse(savedMessages).map((msg: any) => ({
+            ...msg,
+            timestamp: new Date(msg.timestamp)
+          }));
+          setMessages(parsedMessages);
+          messageIdCounter.current = Math.max(...parsedMessages.map((m: any) => parseInt(m.id))) + 1;
+        } catch (error) {
+          console.error('Error loading chat history:', error);
+          // Fall back to welcome message
+          initializeWelcomeMessage();
+        }
+      } else {
+        initializeWelcomeMessage();
+      }
+
+      if (savedQuestionHistory) {
+        try {
+          const parsedHistory = JSON.parse(savedQuestionHistory);
+          setQuestionHistory(parsedHistory);
+        } catch (error) {
+          console.error('Error loading question history:', error);
+        }
+      }
+    }
+  }, []);
+
+  const initializeWelcomeMessage = () => {
+    setMessages([{
+      id: '1',
+      content: 'Hello! I\'m your AI marketing assistant. Connect your data sources and channels, then ask me about campaign recommendations, audience insights, or marketing strategies.',
+      timestamp: new Date(),
+      isUser: false,
+    }]);
+    messageIdCounter.current = 2;
+  };
+
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  // Save messages to localStorage whenever they change
+  useEffect(() => {
+    if (typeof window !== 'undefined' && messages.length > 0) {
+      localStorage.setItem('chat-messages', JSON.stringify(messages));
+    }
+  }, [messages]);
+
+  // Save question history to localStorage whenever it changes
+  useEffect(() => {
+    if (typeof window !== 'undefined' && questionHistory.length > 0) {
+      localStorage.setItem('question-history', JSON.stringify(questionHistory));
+    }
+  }, [questionHistory]);
+
+  // Close history dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (historyRef.current && !historyRef.current.contains(event.target as Node)) {
+        setShowHistory(false);
+      }
+    };
+
+    if (showHistory) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [showHistory]);
 
   const handleSendMessage = async () => {
     if (!inputValue.trim() || isLoading) return;
@@ -40,13 +109,19 @@ export default function ChatInterface({ dataSources, channels, apiKey }: ChatInt
     const enabledChannels = channels.filter(ch => ch.enabled);
 
     const userMessage: Message = {
-      id: Date.now().toString(),
+      id: (++messageIdCounter.current).toString(),
       content: inputValue,
       timestamp: new Date(),
       isUser: true,
     };
 
     setMessages(prev => [...prev, userMessage]);
+
+    // Add to question history if it's not already there
+    if (!questionHistory.includes(inputValue.trim())) {
+      setQuestionHistory(prev => [inputValue.trim(), ...prev].slice(0, 10)); // Keep last 10 questions
+    }
+
     setInputValue('');
     setIsLoading(true);
 
@@ -54,7 +129,7 @@ export default function ChatInterface({ dataSources, channels, apiKey }: ChatInt
     if (connectedSources.length === 0 || enabledChannels.length === 0) {
       setTimeout(() => {
         const errorMessage: Message = {
-          id: (Date.now() + 1).toString(),
+          id: (++messageIdCounter.current).toString(),
           content: `⚠️ **Setup Required**\n\nTo generate campaign recommendations, you need to:\n\n${connectedSources.length === 0 ? '• **Connect at least one data source** (Google Ads, Facebook Pixel, or Shopify)\n' : ''}${enabledChannels.length === 0 ? '• **Enable at least one marketing channel** (Email, SMS, WhatsApp, or Ads)\n' : ''}\nOnce you've connected your data sources and enabled channels, I'll be able to provide personalized campaign recommendations based on your actual data and available marketing platforms.`,
           timestamp: new Date(),
           isUser: false,
@@ -205,12 +280,35 @@ ${rec.campaign_config.budget ? `**Budget:** $${rec.campaign_config.budget.toLoca
     }
   };
 
+  const clearChat = () => {
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('chat-messages');
+      localStorage.removeItem('question-history');
+    }
+    setMessages([]);
+    setQuestionHistory([]);
+    setShowHistory(false);
+    messageIdCounter.current = 1;
+    initializeWelcomeMessage();
+  };
+
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg h-full max-h-full flex flex-col overflow-hidden">
       <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
-        <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-          Chat Assistant
-        </h2>
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+            Chat Assistant
+          </h2>
+          {messages.length > 1 && (
+            <button
+              onClick={clearChat}
+              className="p-2 text-gray-500 hover:text-red-600 dark:text-gray-400 dark:hover:text-red-400 transition-colors"
+              title="Clear chat history"
+            >
+              <Trash2 className="w-4 h-4" />
+            </button>
+          )}
+        </div>
       </div>
 
       <div className="flex-1 overflow-y-auto p-4 min-h-0 max-h-full">
@@ -224,15 +322,47 @@ ${rec.campaign_config.budget ? `**Budget:** $${rec.campaign_config.budget.toLoca
 
       <div className="p-4 border-t border-gray-200 dark:border-gray-700 flex-shrink-0">
         <div className="flex space-x-2">
-          <textarea
-            value={inputValue}
-            onChange={(e) => setInputValue(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder="Ask about campaign strategies, audience insights, or marketing recommendations..."
-            className="flex-1 resize-none rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
-            rows={2}
-            disabled={isLoading}
-          />
+          <div className="flex-1 relative">
+            <textarea
+              value={inputValue}
+              onChange={(e) => setInputValue(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder="Ask about campaign strategies, audience insights, or marketing recommendations..."
+              className="w-full resize-none rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+              rows={2}
+              disabled={isLoading}
+            />
+            {questionHistory.length > 0 && (
+              <div className="relative" ref={historyRef}>
+                <button
+                  onClick={() => setShowHistory(!showHistory)}
+                  className="absolute -top-8 right-2 p-1 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                  title="Previous questions"
+                >
+                  <History className="w-4 h-4" />
+                </button>
+                {showHistory && (
+                  <div className="absolute bottom-full right-0 mb-2 w-80 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg shadow-lg max-h-48 overflow-y-auto z-10">
+                    <div className="p-2 border-b border-gray-200 dark:border-gray-600">
+                      <span className="text-xs font-medium text-gray-600 dark:text-gray-400">Previous Questions</span>
+                    </div>
+                    {questionHistory.map((question, index) => (
+                      <button
+                        key={index}
+                        onClick={() => {
+                          setInputValue(question);
+                          setShowHistory(false);
+                        }}
+                        className="w-full text-left p-2 hover:bg-gray-50 dark:hover:bg-gray-700 text-sm text-gray-700 dark:text-gray-300 border-b border-gray-100 dark:border-gray-700 last:border-b-0"
+                      >
+                        <div className="truncate">{question}</div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
           <button
             onClick={handleSendMessage}
             disabled={!inputValue.trim() || isLoading}

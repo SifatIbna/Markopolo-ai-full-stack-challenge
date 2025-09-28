@@ -63,7 +63,8 @@ export function generateCampaignRecommendation(
 
   const query = userQuery.toLowerCase();
   let audienceMultiplier = 1;
-  let selectedSegment = audienceSegments[Math.floor(Math.random() * audienceSegments.length)];
+  const segmentHash = userQuery.split('').reduce((a, b) => { a = ((a << 5) - a) + b.charCodeAt(0); return a & a; }, 0);
+  let selectedSegment = audienceSegments[Math.abs(segmentHash) % audienceSegments.length];
 
   if (query.includes('cart') || query.includes('abandon')) {
     selectedSegment = 'Cart abandoners';
@@ -91,12 +92,15 @@ export function generateCampaignRecommendation(
     .slice(0, 2)
     .map(ch => ch.name);
 
-  const discount = Math.floor(Math.random() * 20) + 10;
+  // Use deterministic values based on input to avoid hydration issues
+  const queryHash = query.split('').reduce((a, b) => { a = ((a << 5) - a) + b.charCodeAt(0); return a & a; }, 0);
+  const discount = Math.abs(queryHash % 20) + 10;
   const messageTemplate = messagingTemplates[primaryChannel as keyof typeof messagingTemplates]?.[0] || messagingTemplates.email[0];
 
-  const budget = enabledChannels.some(ch => ch.type === 'ads') ? Math.floor(Math.random() * 5000) + 1000 : undefined;
+  const budget = enabledChannels.some(ch => ch.type === 'ads') ? Math.abs(queryHash % 5000) + 1000 : undefined;
 
   return {
+    campaign_id: `campaign_${selectedSegment.toLowerCase().replace(/\s+/g, '_')}_${primaryChannel}`,
     audience: {
       segment: selectedSegment,
       criteria: {
@@ -111,9 +115,9 @@ export function generateCampaignRecommendation(
       size: audienceSize,
     },
     timing: {
-      optimal_time: timeSlots[Math.floor(Math.random() * timeSlots.length)],
+      optimal_time: timeSlots[Math.abs(queryHash) % timeSlots.length],
       timezone: 'UTC-5 (EST)',
-      frequency: frequencies[Math.floor(Math.random() * frequencies.length)],
+      frequency: frequencies[Math.abs(queryHash) % frequencies.length],
     },
     channel: {
       primary: enabledChannels.find(ch => ch.type === primaryChannel)?.name || 'Email Marketing',
@@ -146,8 +150,8 @@ export function generateCampaignRecommendation(
       },
       expected_metrics: {
         reach: Math.floor(audienceSize * 0.8),
-        engagement_rate: Math.random() * 0.05 + 0.02,
-        conversion_rate: Math.random() * 0.03 + 0.01,
+        engagement_rate: (Math.abs(queryHash % 50) / 1000) + 0.02, // 0.02-0.07
+        conversion_rate: (Math.abs(queryHash % 30) / 1000) + 0.01, // 0.01-0.04
       },
     },
   };

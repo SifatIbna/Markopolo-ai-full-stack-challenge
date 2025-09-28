@@ -25,10 +25,16 @@ export interface Message {
 }
 
 export interface CampaignRecommendation {
+  campaign_id: string;
   audience: {
     segment: string;
     criteria: Record<string, unknown>;
     size: number;
+    demographics?: {
+      age_range: string;
+      interests: string[];
+      location: string;
+    };
   };
   timing: {
     optimal_time: string;
