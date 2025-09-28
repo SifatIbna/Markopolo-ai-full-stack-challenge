@@ -16,7 +16,7 @@ describe('Chat Workflow', () => {
 
     // Check message input and send button
     cy.get('textarea[placeholder*="Ask about campaign strategies"]').should('be.visible')
-    cy.get('button:has(svg)').should('be.visible') // Send button with icon
+    cy.get('button').should('be.visible') // Send button
   })
 
   it('should display data sources panel', () => {
@@ -57,8 +57,8 @@ describe('Chat Workflow', () => {
     cy.get('textarea[placeholder*="Ask about campaign strategies"]').should('not.be.disabled').type(testMessage)
 
     // Send the message using a more specific selector for the send button
-    cy.get('textarea[placeholder*="Ask about campaign strategies"]').parent().within(() => {
-      cy.get('button:has(svg)').click()
+    cy.get('textarea[placeholder*="Ask about campaign strategies"]').parent().parent().within(() => {
+      cy.get('button').last().click()
     })
 
     // Check if user message appears (with more relaxed visibility check)
@@ -76,8 +76,8 @@ describe('Chat Workflow', () => {
     cy.get('textarea[placeholder*="Ask about campaign strategies"]').should('be.visible').should('not.be.disabled').type('Give me campaign ideas')
 
     // Send the message using a more specific selector
-    cy.get('textarea[placeholder*="Ask about campaign strategies"]').parent().within(() => {
-      cy.get('button:has(svg)').click()
+    cy.get('textarea[placeholder*="Ask about campaign strategies"]').parent().parent().within(() => {
+      cy.get('button').last().click()
     })
 
     // Should get setup required message

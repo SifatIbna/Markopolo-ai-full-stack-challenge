@@ -1,6 +1,19 @@
 import { render, screen, fireEvent, cleanup, act } from '@testing-library/react'
 import { JsonDisplay } from '@/components/ui/JsonDisplay'
 
+// Mock Next.js useRouter
+const mockPush = jest.fn()
+jest.mock('next/navigation', () => ({
+  useRouter: () => ({
+    push: mockPush,
+    back: jest.fn(),
+    forward: jest.fn(),
+    refresh: jest.fn(),
+    replace: jest.fn(),
+    prefetch: jest.fn(),
+  }),
+}))
+
 // Mock clipboard API
 const mockWriteText = jest.fn()
 Object.defineProperty(navigator, 'clipboard', {
@@ -28,6 +41,7 @@ const mockData = {
 beforeEach(() => {
   cleanup()
   document.body.innerHTML = ''
+  jest.clearAllMocks()
 })
 
 afterEach(() => {
