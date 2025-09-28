@@ -1,37 +1,104 @@
 name: Vercel Preview Deployment
 env:
+  NODE_VERSION: 22
   VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
   VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
 on:
   push:
     branches-ignore:
       - main
+  pull_request:
+    types: [opened, synchronize]
+
 jobs:
-  Deploy-Preview:
+  setup:
+    name: Setup dependencies
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
+
+      - name: Cache node modules
+        id: cache
+        uses: actions/cache@v4
+        with:
+          path: node_modules
+          key: ${{ runner.os }}-node-${{ hashFiles('package-lock.json') }}
+
       - name: Install dependencies
+        if: steps.cache.outputs.cache-hit != 'true'
         run: npm ci
-      - name: Run linting
-        run: npm run lint
-      - name: Run tests
-        run: npm run test
+
+  validate:
+    name: Lint & Test
+    needs: setup
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        task: [lint, test]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Restore node modules
+        uses: actions/cache@v4
+        with:
+          path: node_modules
+          key: ${{ runner.os }}-node-${{ hashFiles('package-lock.json') }}
+
+      - name: Run ${{ matrix.task }}
+        run: npm run ${{ matrix.task }}
+
+  deploy:
+    needs: [setup, validate]
+    name: Build & Deploy
+    runs-on: ubuntu-latest
+    environment:
+      name: preview
+      url: ${{ steps.seturl.outputs.url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Restore node modules
+        uses: actions/cache@v4
+        with:
+          path: node_modules
+          key: ${{ runner.os }}-node-${{ hashFiles('package-lock.json') }}
+
       - name: Install Vercel CLI
         run: npm install --global vercel@latest
+
       - name: Link Vercel Project
         run: vercel link --yes --token=${{ secrets.VERCEL_TOKEN }}
+
       - name: Pull Vercel Environment Information
         run: vercel pull --yes --environment=preview --token=${{ secrets.VERCEL_TOKEN }}
-      - name: Build Project Artifacts
-        run: vercel build --token=${{ secrets.VERCEL_TOKEN }}
-      - name: Deploy Project Artifacts to Vercel
-        run: vercel deploy --prebuilt --yes --token=${{ secrets.VERCEL_TOKEN }} | tee deploy-output.txt
-      - name: Output Preview URL
+
+      - name: Build & Deploy
+        shell: bash
         run: |
-          echo "Preview URL:" && cat deploy-output.txt | grep -E "https://.*\.vercel\.app"
+          vercel build --token=${{ secrets.VERCEL_TOKEN }}
+          vercel deploy --prebuilt --yes --token=${{ secrets.VERCEL_TOKEN }} | tee deploy-output.txt
+
+      - id: seturl
+        name: Set preview URL
+        run: echo "url=$(cat deploy-output.txt | grep -E 'https://.*\.vercel\.app' | head -1)" >> $GITHUB_OUTPUT
+
+      - name: Output Preview URL
+        run: echo "${{ steps.seturl.outputs.url }}"
