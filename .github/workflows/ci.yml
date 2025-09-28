@@ -36,18 +36,8 @@ jobs:
     - name: Run unit tests
       run: npm run test:coverage
 
-    - name: Upload coverage reports
-      uses: codecov/codecov-action@v3
-      with:
-        file: ./coverage/lcov.info
-        flags: unittests
-        name: codecov-umbrella
-
     - name: Build application
       run: npm run build
-
-    - name: Install Playwright browsers
-      run: npx playwright install --with-deps
 
     - name: Start application for E2E tests
       run: npm run build && npm start &
@@ -58,12 +48,6 @@ jobs:
     - name: Run E2E tests
       run: npm run test:e2e
 
-    - name: Upload E2E test results
-      uses: actions/upload-artifact@v3
-      if: failure()
-      with:
-        name: cypress-screenshots
-        path: cypress/screenshots
 
   deploy:
     needs: test
