@@ -10,23 +10,27 @@ A modern, responsive chat interface for AI-powered marketing campaign recommenda
 - **🎨 Modern UI/UX** - Built with Tailwind CSS and Radix UI components
 - **🌙 Dark/Light Theme** - Fully responsive theme switching with system preference detection
 - **📈 Campaign Recommendations** - AI-generated marketing strategies with detailed metrics
+- **🚀 Campaign Execution** - Visual campaign flow builder with React Flow integration
 - **📋 JSON Export** - Copy and download campaign recommendations as JSON
+- **📝 Campaign History** - Previous questions stored and accessible via history button
 - **⚡ Real-time Updates** - Live chat with simulated AI streaming responses
+- **🧪 Comprehensive Testing** - Unit tests (Jest) and E2E tests (Cypress)
 
 ## 🚀 Tech Stack
 
 - **Frontend**: Next.js 15, React 19, TypeScript
 - **Styling**: Tailwind CSS, CSS Modules
 - **UI Components**: Radix UI, Lucide React Icons
+- **Flow Builder**: React Flow for campaign visualization
 - **Theme**: Next-themes for dark/light mode
 - **Testing**: Jest, React Testing Library, Cypress
-- **Deployment**: Vercel
-- **CI/CD**: GitHub Actions
+- **Deployment**: Vercel with optimized GitHub Actions workflows
+- **CI/CD**: GitHub Actions with parallel validation and caching
 
 ## Getting Started
 
 ### Prerequisites
-- Node.js 18+
+- Node.js 20+
 - npm or yarn
 
 ### Installation
@@ -68,6 +72,12 @@ npm run dev
    - Personalized messaging
    - Budget and performance projections
    - Executable JSON campaign configuration
+
+5. **Execute Campaigns**: Click the "Execute Campaign" button on recommendations to:
+   - Visualize campaign flow with React Flow
+   - View detailed execution steps
+   - Monitor campaign progress
+   - Access campaign data and configuration
 
 ## Example Campaign JSON Output
 
@@ -119,15 +129,22 @@ npm run dev
 ```
 src/
 ├── app/                    # Next.js app directory
-│   └── page.tsx           # Main application page
+│   ├── page.tsx           # Main application page
+│   ├── api/chat/          # Chat API routes
+│   └── execute/           # Campaign execution pages
 ├── components/            # React components
 │   ├── chat/             # Chat interface components
 │   ├── channels/         # Channel management components
-│   └── data-sources/     # Data source components
+│   ├── data-sources/     # Data source components
+│   ├── ui/               # Reusable UI components
+│   └── campaign/         # Campaign execution components
 ├── lib/                  # Utility functions
 │   └── campaignGenerator.ts # AI campaign recommendation logic
-└── types/                # TypeScript type definitions
-    └── index.ts          # Main type definitions
+├── types/                # TypeScript type definitions
+│   └── index.ts          # Main type definitions
+└── __tests__/            # Test files
+    ├── components/       # Component tests
+    └── lib/              # Library tests
 ```
 
 ## Development
@@ -138,6 +155,34 @@ src/
 - `npm run build` - Build for production
 - `npm run start` - Start production server
 - `npm run lint` - Run ESLint
+- `npm run test` - Run unit tests with Jest
+- `npm run test:watch` - Run tests in watch mode
+- `npm run test:coverage` - Run tests with coverage report
+- `npm run test:e2e` - Run Cypress E2E tests
+- `npm run test:e2e:ui` - Open Cypress in interactive mode
+- `npm run test:all` - Run all tests (unit + E2E)
+
+### Testing
+
+The project includes comprehensive testing setup:
+
+**Unit Tests (Jest + React Testing Library)**
+```bash
+npm run test                # Run all unit tests
+npm run test:watch         # Run tests in watch mode
+npm run test:coverage      # Generate coverage report
+```
+
+**E2E Tests (Cypress)**
+```bash
+npm run test:e2e          # Run headless E2E tests
+npm run test:e2e:ui       # Open Cypress interactive mode
+```
+
+**Run All Tests**
+```bash
+npm run test:all          # Run both unit and E2E tests
+```
 
 ### Building for Production
 
@@ -145,6 +190,15 @@ src/
 npm run build
 npm run start
 ```
+
+### GitHub Actions Workflows
+
+The project includes optimized CI/CD workflows:
+
+- **Preview Deployment** - Parallel validation (lint + test) and Vercel deployment
+- **Dependency Caching** - Shared dependency installation across jobs
+- **Matrix Testing** - Concurrent lint and test execution
+- **Environment URLs** - Preview deployments with GitHub environment integration
 
 ## Contributing
 
