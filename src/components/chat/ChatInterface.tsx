@@ -151,7 +151,7 @@ export default function ChatInterface({ dataSources, channels, apiKey }: ChatInt
       currentText += (i > 0 ? ' ' : '') + words[i];
 
       // Use the recommendation passed from the API (server already extracted JSON)
-      let extractedRecommendation = recommendation;
+      const extractedRecommendation = recommendation;
 
       setMessages(prev =>
         prev.map(msg =>
